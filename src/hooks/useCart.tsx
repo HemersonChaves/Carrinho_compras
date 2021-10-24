@@ -36,14 +36,14 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const addProduct = async (productId: number) => {
     try {
+      const notify = () => toast("Wow so easy!");
+
       const productExist = (await api.get(`/products/${productId}`)).data;      
       
       if (productExist) {
         const produto = cart.find(x => x.id === productId);
         if(!produto){
-          setCart([...cart, productExist,]);
-          console.log(productExist);
-         
+          setCart([...cart, productExist,]);         
         }
         const cart_local = localStorage.getItem('@RocketShoes:cart');
         if (cart_local) {
@@ -52,11 +52,14 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         }
        
         localStorage.setItem('@RocketShoes:cart', JSON.stringify([productId]));
+      }else{
+        notify();
       }
-     
+      
 
     } catch {
-      // TODO
+      const notify = () => toast("Erro na adição do produto");
+      notify();
     }
   };
 
