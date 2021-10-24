@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 import { toast } from 'react-toastify';
 import { api } from '../services/api';
 import { Product, Stock } from '../types';
@@ -36,14 +36,22 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const addProduct = async (productId: number) => {
     try {
-      const productExist = cart.find(x => x.id === productId);
-      if (!productExist) {
-        const produto = (await api.get(`/products/${productId}`)).data;
-
-        setCart([...cart, produto]);
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify([...cart.map(item => item.id), productId]));
-        console.log(cart);
-        console.log(produto);
+      const productExist = (await api.get(`/products/${productId}`)).data;      
+      
+      if (productExist) {
+        const produto = cart.find(x => x.id === productId);
+        if(!produto){
+          setCart([...cart, productExist,]);
+          console.log(productExist);
+         
+        }
+        const cart_local = localStorage.getItem('@RocketShoes:cart');
+        if (cart_local) {
+         localStorage.setItem('@RocketShoes:cart', JSON.stringify([...JSON.parse(cart_local), productId]));
+         return ;
+        }
+       
+        localStorage.setItem('@RocketShoes:cart', JSON.stringify([productId]));
       }
      
 
