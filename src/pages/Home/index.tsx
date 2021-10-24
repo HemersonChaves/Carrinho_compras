@@ -38,6 +38,8 @@ const Home = (): JSX.Element => {
   }, []);
 
   function handleAddProduct(id: number) {
+    // products.find(x => x.id === id)
+   
      addProduct(id);
   }
 

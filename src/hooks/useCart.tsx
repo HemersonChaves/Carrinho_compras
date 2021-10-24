@@ -32,11 +32,20 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
     return [];
   });
- 
+
 
   const addProduct = async (productId: number) => {
     try {
-      localStorage.setItem('@RocketShoes:cart', JSON.stringify([...cart, productId]));     
+      const productExist = cart.find(x => x.id === productId);
+      if (!productExist) {
+        const produto = (await api.get(`/products/${productId}`)).data;
+
+        setCart([...cart, produto]);
+        localStorage.setItem('@RocketShoes:cart', JSON.stringify([...cart.map(item => item.id), productId]));
+        console.log(cart);
+        console.log(produto);
+      }
+     
 
     } catch {
       // TODO
