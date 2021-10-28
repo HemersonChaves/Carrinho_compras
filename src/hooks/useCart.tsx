@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { api } from '../services/api';
 import { Product, Stock } from '../types';
@@ -32,31 +32,32 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
     return [];
   });
+  useEffect(() => { 
+    localStorage.setItem('@RocketShoes:cart', JSON.stringify(cart));
+  }, [cart])
 
 
   const addProduct = async (productId: number) => {
     try {
-      const notify = () => toast("Wow so easy!");
-
-      const productExist = (await api.get(`/products/${productId}`)).data;      
-      
+      const productExist = (await api.get(`/products/${productId}`)).data;
       if (productExist) {
+
+        const estoques = (await api.get<Stock>(`/stock/${productId}`)).data;
+        if ((estoques.amount ) <= 0) {
+          const notify = () => toast("Wow so easy!");
+          notify();
+          return;
+        }
+
         const produto = cart.find(x => x.id === productId);
-        if(!produto){
-          setCart([...cart, productExist,]);         
+        if (!produto) {
+          const updateCart = [...cart, productExist];
+          setCart(updateCart);
         }
-        const cart_local = localStorage.getItem('@RocketShoes:cart');
-        if (cart_local) {
-         localStorage.setItem('@RocketShoes:cart', JSON.stringify([...JSON.parse(cart_local), productId]));
-         return ;
-        }
-       
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify([productId]));
-      }else{
+      } else {
+        const notify = () => toast("Wow so easy!");
         notify();
       }
-      
-
     } catch {
       const notify = () => toast("Erro na adição do produto");
       notify();
