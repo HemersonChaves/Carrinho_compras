@@ -50,10 +50,11 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         }
 
         const produto = cart.find(x => x.id === productId);
-        if (!produto) {
-          const updateCart = [...cart, productExist];
+       /* if (!produto) {
+          estoques
+        }*/
+        const updateCart = [...cart, productExist];
           setCart(updateCart);
-        }
       } else {
         const notify = () => toast("Wow so easy!");
         notify();
