@@ -11,9 +11,13 @@ interface UpdateProductAmount {
   productId: number;
   amount: number;
 }
+interface CartItemsAmount {
+  [key: number]: number;
+}
 
 interface CartContextData {
   cart: Product[];
+  cartItemsAmount: CartItemsAmount;
   addProduct: (productId: number) => Promise<void>;
   removeProduct: (productId: number) => void;
   updateProductAmount: ({ productId, amount }: UpdateProductAmount) => void;
@@ -22,6 +26,20 @@ interface CartContextData {
 const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: CartProviderProps): JSX.Element {
+
+  const [cartItemsAmount, setCartItemsAmount] = useState<CartItemsAmount>(() => {
+
+    const storagedCart = localStorage.getItem('@RocketShoes:cart');
+
+    if (storagedCart) {
+      const itemsAmount = JSON.parse(storagedCart).reduce((sumAmount: { [x: string]: number; }, product: { id: string | number; }) => {
+        sumAmount[product.id] = sumAmount[product.id] + 1 || 0;
+        return sumAmount;
+      }, {} as CartItemsAmount);
+      return itemsAmount;
+    }
+    return [];
+  });
 
   const [cart, setCart] = useState<Product[]>(() => {
 
@@ -32,29 +50,48 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
     return [];
   });
-  useEffect(() => { 
+
+  useEffect(() => {
     localStorage.setItem('@RocketShoes:cart', JSON.stringify(cart));
-  }, [cart])
+
+    const itemsAmount = cart.reduce((sumAmount, product) => {
+      sumAmount[product.id] = Number(sumAmount[product.id]) + 1 || 1;
+      return sumAmount;
+    }, {} as CartItemsAmount);
+    setCartItemsAmount(itemsAmount);
+    // console.log(cartItemsAmount);
+  }, [cart]);
 
 
   const addProduct = async (productId: number) => {
     try {
       const productExist = (await api.get(`/products/${productId}`)).data;
       if (productExist) {
-
         const estoques = (await api.get<Stock>(`/stock/${productId}`)).data;
-        if ((estoques.amount ) <= 0) {
-          const notify = () => toast("Wow so easy!");
+        if ((estoques.amount) <= 0) {
+          const notify = () => toast("Quantidade solicitada fora de estoque");
           notify();
           return;
         }
-
+        // verifica se ja existe em cart
         const produto = cart.find(x => x.id === productId);
-       /* if (!produto) {
-          estoques
-        }*/
-        const updateCart = [...cart, productExist];
+        // aumenta o amountar
+        
+
+        
+        // atualizar cart
+        if (!produto) {
+          Object.assign(productExist, {amount:1});
+          const updateCart = [...cart, productExist];
+          
           setCart(updateCart);
+          
+        } else{
+          const amount = produto.amount + 1 || 1;
+          Object.assign(produto, {amount});
+          setCart([...cart, produto]);
+        }       
+        
       } else {
         const notify = () => toast("Wow so easy!");
         notify();
@@ -86,7 +123,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   return (
     <CartContext.Provider
-      value={{ cart, addProduct, removeProduct, updateProductAmount }}
+      value={{ cart, cartItemsAmount, addProduct, removeProduct, updateProductAmount }}
     >
       {children}
     </CartContext.Provider>

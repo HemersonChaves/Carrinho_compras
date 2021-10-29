@@ -4,7 +4,7 @@ import { MdAddShoppingCart } from 'react-icons/md';
 import { ProductList } from './styles';
 import { api } from '../../services/api';
 import { formatPrice } from '../../util/format';
-import { useCart } from '../../hooks/useCart';
+import { useCart} from '../../hooks/useCart';
 
 interface Product {
   id: number;
@@ -17,19 +17,11 @@ interface ProductFormatted extends Product {
   priceFormatted: string;
 }
 
-interface CartItemsAmount {
-  [key: number]: number;
-}
 
 const Home = (): JSX.Element => {
   const [products, setProducts] = useState<ProductFormatted[]>([]);
-  const { addProduct, cart } = useCart();
+  const { addProduct, cart, cartItemsAmount } = useCart();
 
-
-  const cartItemsAmount = cart.reduce((sumAmount, product) => {
-    sumAmount[product.id] = sumAmount[product.id] + 1 || 0;
-    return sumAmount;
-  }, {} as CartItemsAmount)
 
   useEffect(() => {
     async function loadProducts() {
@@ -41,8 +33,6 @@ const Home = (): JSX.Element => {
 
   function handleAddProduct(id: number) {
     addProduct(id);
-    const a  = cartItemsAmount[id];
-    console.log(cartItemsAmount);
   }
 
   return (
