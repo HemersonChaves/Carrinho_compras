@@ -73,27 +73,26 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
           notify();
           return;
         }
-        // verifica se ja existe em cart
         const produto = cart.find(x => x.id === productId);
-        // aumenta o amountar
-        
 
-        
-        // atualizar cart
         if (!produto) {
-          Object.assign(productExist, {amount:1});
+          Object.assign(productExist, { amount: 1 });
           const updateCart = [...cart, productExist];
-          
+
           setCart(updateCart);
-          
-        } else{
-          const amount = produto.amount + 1 || 1;
-          Object.assign(produto, {amount});
-          setCart([...cart, produto]);
-        }       
-        
+
+        } else {
+          if (estoques.amount > produto.amount) {
+            const amount = produto.amount + 1 || 1;
+            Object.assign(produto, { amount });
+            setCart([...cart, produto]);
+          }
+          const notify = () => toast("Quantidade solicitada fora de estoque");
+          notify();
+        }
+
       } else {
-        const notify = () => toast("Wow so easy!");
+        const notify = () => toast("Erro na alteração de quantidade do produto");
         notify();
       }
     } catch {
