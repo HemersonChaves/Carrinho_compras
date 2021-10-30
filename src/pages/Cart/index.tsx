@@ -5,8 +5,8 @@ import {
   MdRemoveCircleOutline,
 } from 'react-icons/md';
 
-// import { useCart } from '../../hooks/useCart';
-// import { formatPrice } from '../../util/format';
+import { useCart } from '../../hooks/useCart';
+import { formatPrice } from '../../util/format';
 import { Container, ProductTable, Total } from './styles';
 
 interface Product {
@@ -18,50 +18,50 @@ interface Product {
 }
 
 const Cart = (): JSX.Element => {
-  // const { cart, removeProduct, updateProductAmount } = useCart();
+  const { cart, removeProduct, updateProductAmount } = useCart();
 
-  // const cartFormatted = cart.map(product => ({
-  //   // TODO
-  // }))
-  // const total =
-  //   formatPrice(
-  //     cart.reduce((sumTotal, product) => {
-  //       // TODO
-  //     }, 0)
-  //   )
+  /*const cartFormatted = cart.map(product => ({
+    formatPrice(product.price)
+   })) */
+const total = formatPrice(
+  cart.reduce((sumTotal, product) => {
+    return sumTotal + product.price;    
+  }, 0)
+)
 
-  function handleProductIncrement(product: Product) {
-    // TODO
-  }
+function handleProductIncrement(product: Product) {
+  // TODO
+}
 
-  function handleProductDecrement(product: Product) {
-    // TODO
-  }
+function handleProductDecrement(product: Product) {
+  // TODO
+}
 
-  function handleRemoveProduct(productId: number) {
-    // TODO
-  }
+function handleRemoveProduct(productId: number) {
+  // TODO
+}
 
-  return (
-    <Container>
-      <ProductTable>
-        <thead>
-          <tr>
-            <th aria-label="product image" />
-            <th>PRODUTO</th>
-            <th>QTD</th>
-            <th>SUBTOTAL</th>
-            <th aria-label="delete icon" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr data-testid="product">
+return (
+  <Container>
+    <ProductTable>
+      <thead>
+        <tr>
+          <th aria-label="product image" />
+          <th>PRODUTO</th>
+          <th>QTD</th>
+          <th>SUBTOTAL</th>
+          <th aria-label="delete icon" />
+        </tr>
+      </thead>
+      <tbody>
+        {cart.map((produto) => {
+          return <tr data-testid="product" key={produto.id}>
             <td>
-              <img src="https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis1.jpg" alt="Tênis de Caminhada Leve Confortável" />
+              <img src={produto.image} alt={produto.title} />
             </td>
             <td>
-              <strong>Tênis de Caminhada Leve Confortável</strong>
-              <span>R$ 179,90</span>
+              <strong>{produto.title}</strong>
+              <span>{formatPrice(produto.price)}</span>
             </td>
             <td>
               <div>
@@ -77,7 +77,7 @@ const Cart = (): JSX.Element => {
                   type="text"
                   data-testid="product-amount"
                   readOnly
-                  value={2}
+                  value={produto.amount}
                 />
                 <button
                   type="button"
@@ -89,7 +89,7 @@ const Cart = (): JSX.Element => {
               </div>
             </td>
             <td>
-              <strong>R$ 359,80</strong>
+              <strong>{produto.amount * produto.price}</strong>
             </td>
             <td>
               <button
@@ -101,19 +101,20 @@ const Cart = (): JSX.Element => {
               </button>
             </td>
           </tr>
-        </tbody>
-      </ProductTable>
+        })}
+      </tbody>
+    </ProductTable>
 
-      <footer>
-        <button type="button">Finalizar pedido</button>
+    <footer>
+      <button type="button">Finalizar pedido</button>
 
-        <Total>
-          <span>TOTAL</span>
-          <strong>R$ 359,80</strong>
-        </Total>
-      </footer>
-    </Container>
-  );
+      <Total>
+        <span>TOTAL</span>
+        <strong>{total}</strong>
+      </Total>
+    </footer>
+  </Container>
+);
 };
 
 export default Cart;
