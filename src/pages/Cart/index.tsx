@@ -89,7 +89,7 @@ return (
               </div>
             </td>
             <td>
-              <strong>{produto.amount * produto.price}</strong>
+              <strong>{formatPrice(produto.amount * produto.price)}</strong>
             </td>
             <td>
               <button
