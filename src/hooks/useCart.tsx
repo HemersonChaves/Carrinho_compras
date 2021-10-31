@@ -65,38 +65,23 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const addProduct = async (productId: number) => {
     try {
-      const productExist = (await api.get(`/products/${productId}`)).data;
-      if (productExist) {
-        const estoques = (await api.get<Stock>(`/stock/${productId}`)).data;
-        if ((estoques.amount) <= 0) {
-          const notify = () => toast("Quantidade solicitada fora de estoque");
-          notify();
-          return;
-        }
-        const produto = cart.find(x => x.id === productId);
+      const produto = cart.find(produto => produto.id === productId);
 
-        if (!produto) {
-          Object.assign(productExist, { amount: 1 });
-          const updateCart = [...cart, productExist];
+      if (!produto) {
+        const produto = (await api.get(`/products/${productId}`)).data;
+        Object.assign(produto, { amount: 1 });
+        const updateCart: Product[] = [...cart, produto];
 
-          setCart(updateCart);
-
-        } else {
-          if (estoques.amount > produto.amount) {
-            const amount = produto.amount + 1 || 1;
-            Object.assign(produto, { amount });
-            setCart([...cart, produto]);
-          }
-          const notify = () => toast("Quantidade solicitada fora de estoque");
-          notify();
-        }
+        setCart(updateCart);
 
       } else {
-        const notify = () => toast("Erro na alteração de quantidade do produto");
-        notify();
+        // const amount = produto.amount + 1;
+        updateProductAmount({ productId, amount: (produto.amount + 1) });
       }
+
+
     } catch {
-      const notify = () => toast("Erro na adição do produto");
+      const notify = () => toast.error("Erro na adição do produto");
       notify();
     }
   };
@@ -114,7 +99,25 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     amount,
   }: UpdateProductAmount) => {
     try {
-      // TODO
+      const estoques = (await api.get<Stock>(`/stock/${productId}`)).data;
+
+      if ((estoques.amount) <= 0) {
+        const notify = () => toast.warn("Quantidade solicitada fora de estoque");
+        notify();
+        return;
+      }
+
+      if (estoques.amount < amount) {
+        const notify = () => toast.warn("Quantidade solicitada fora de estoque");
+        notify();
+        return;
+      }
+
+      const produto = cart.find(produto => produto.id === productId);
+      if (produto) {
+        Object.assign(produto, { amount: amount });
+        setCart([...cart, produto]);
+      }
     } catch {
       // TODO
     }
