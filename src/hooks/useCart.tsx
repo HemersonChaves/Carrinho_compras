@@ -52,16 +52,12 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
   });
 
   useEffect(() => {
-    localStorage.setItem('@RocketShoes:cart', JSON.stringify(cart));
-
     const itemsAmount = cart.reduce((sumAmount, product) => {
       sumAmount[product.id] = Number(sumAmount[product.id]) + 1 || 1;
       return sumAmount;
     }, {} as CartItemsAmount);
     setCartItemsAmount(itemsAmount);
-    // console.log(cartItemsAmount);
   }, [cart]);
-
 
   const addProduct = async (productId: number) => {
     try {
@@ -71,11 +67,10 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         const produto = (await api.get(`/products/${productId}`)).data;
         Object.assign(produto, { amount: 1 });
         const updateCart: Product[] = [...cart, produto];
-
+        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updateCart));
         setCart(updateCart);
 
       } else {
-        // const amount = produto.amount + 1;
         updateProductAmount({ productId, amount: (produto.amount + 1) });
       }
 
@@ -88,7 +83,12 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const removeProduct = (productId: number) => {
     try {
-      // TODO
+      const produto = cart.find(produto => produto.id === productId);
+
+      if (produto) {
+        updateProductAmount({ productId, amount: (produto.amount -1) });
+
+      }
     } catch {
       // TODO
     }
@@ -115,8 +115,11 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
       const produto = cart.find(produto => produto.id === productId);
       if (produto) {
-        Object.assign(produto, { amount: amount });
-        setCart([...cart, produto]);
+        Object.assign(produto, { amount: amount });   
+        const updateCart: Product[] = cart;
+        Object.assign(updateCart, { produto });
+        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updateCart));
+        setCart(updateCart);
       }
     } catch {
       // TODO
