@@ -14,10 +14,8 @@ interface UpdateProductAmount {
 interface CartItemsAmount {
   [key: number]: number;
 }
-
 interface CartContextData {
   cart: Product[];
-  cartItemsAmount: CartItemsAmount;
   addProduct: (productId: number) => Promise<void>;
   removeProduct: (productId: number) => void;
   updateProductAmount: ({ productId, amount }: UpdateProductAmount) => void;
@@ -27,37 +25,17 @@ const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
-  const [cartItemsAmount, setCartItemsAmount] = useState<CartItemsAmount>(() => {
-
-    const storagedCart = localStorage.getItem('@RocketShoes:cart');
-
-    if (storagedCart) {
-      const itemsAmount = JSON.parse(storagedCart).reduce((sumAmount: { [x: string]: number; }, product: { id: string | number; }) => {
-        sumAmount[product.id] = sumAmount[product.id] + 1 || 0;
-        return sumAmount;
-      }, {} as CartItemsAmount);
-      return itemsAmount;
-    }
-    return [];
-  });
-
   const [cart, setCart] = useState<Product[]>(() => {
 
     const storagedCart = localStorage.getItem('@RocketShoes:cart');
     if (storagedCart) {
-      return JSON.parse(storagedCart);
+      const cart_ = JSON.parse(storagedCart);
+      
+      return cart_;
     }
 
     return [];
   });
-
-  useEffect(() => {
-    const itemsAmount = cart.reduce((sumAmount, product) => {
-      sumAmount[product.id] = Number(sumAmount[product.id]) + 1 || 1;
-      return sumAmount;
-    }, {} as CartItemsAmount);
-    setCartItemsAmount(itemsAmount);
-  }, [cart]);
 
   const addProduct = async (productId: number) => {
     try {
@@ -68,12 +46,16 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         Object.assign(produto, { amount: 1 });
         const updateCart: Product[] = [...cart, produto];
         localStorage.setItem('@RocketShoes:cart', JSON.stringify(updateCart));
+
+        // setCartItemsAmount(updateCart.map(item => ({ item.id: 2, item.amount }), {} as CartItemsAmount));
+
         setCart(updateCart);
 
       } else {
         updateProductAmount({ productId, amount: (produto.amount + 1) });
       }
 
+   
 
     } catch {
       const notify = () => toast.error("Erro na adição do produto");
@@ -128,7 +110,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   return (
     <CartContext.Provider
-      value={{ cart, cartItemsAmount, addProduct, removeProduct, updateProductAmount }}
+      value={{ cart, addProduct, removeProduct, updateProductAmount }}
     >
       {children}
     </CartContext.Provider>
