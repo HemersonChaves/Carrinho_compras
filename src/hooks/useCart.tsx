@@ -11,9 +11,6 @@ interface UpdateProductAmount {
   productId: number;
   amount: number;
 }
-interface CartItemsAmount {
-  [key: number]: number;
-}
 interface CartContextData {
   cart: Product[];
   addProduct: (productId: number) => Promise<void>;
