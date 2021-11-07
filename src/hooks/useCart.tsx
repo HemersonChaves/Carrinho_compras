@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { api } from '../services/api';
 import { Product, Stock } from '../types';
@@ -23,11 +23,11 @@ const CartContext = createContext<CartContextData>({} as CartContextData);
 export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const [cart, setCart] = useState<Product[]>(() => {
-
+    // verificar se localstorage possue o valor de carrinho armazenado
+    // se nao retorna vetor vazio
     const storagedCart = localStorage.getItem('@RocketShoes:cart');
     if (storagedCart) {
       const cart_ = JSON.parse(storagedCart);
-      
       return cart_;
     }
 
@@ -36,27 +36,27 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const addProduct = async (productId: number) => {
     try {
-      const produto = cart.find(produto => produto.id === productId);
+      const updateCart: Product[] = [...cart];
+      const produtoExist = updateCart.find(produto => produto.id === productId);
 
-      if (!produto) {
+      if (!produtoExist) {
         const produto = (await api.get(`/products/${productId}`)).data;
-        Object.assign(produto, { amount: 1 });
-        const updateCart: Product[] = [...cart, produto];
+        const estoqueProduto = (await api.get<Stock>(`/stock/${productId}`)).data;
+
+        if (produto.amount > estoqueProduto) {
+          toast.warn("Quantidade solicitada fora de estoque");
+          return;
+        }
+        produto.amount = 1;
+        setCart([...updateCart, produto]);
         localStorage.setItem('@RocketShoes:cart', JSON.stringify(updateCart));
-
-        // setCartItemsAmount(updateCart.map(item => ({ item.id: 2, item.amount }), {} as CartItemsAmount));
-
-        setCart(updateCart);
-
       } else {
-        updateProductAmount({ productId, amount: (produto.amount + 1) });
+        updateProductAmount({ productId, amount: (produtoExist.amount + 1) });
       }
 
-   
-
     } catch {
-      const notify = () => toast.error("Erro na adição do produto");
-      notify();
+      toast.error("Erro na adição do produto");
+
     }
   };
 
@@ -65,8 +65,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       const produto = cart.find(produto => produto.id === productId);
 
       if (produto) {
-        updateProductAmount({ productId, amount: (produto.amount -1) });
-
+        updateProductAmount({ productId, amount: (produto.amount - 1) });
       }
     } catch {
       // TODO
@@ -81,30 +80,30 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       const estoques = (await api.get<Stock>(`/stock/${productId}`)).data;
 
       if ((estoques.amount) <= 0) {
-        const notify = () => toast.warn("Quantidade solicitada fora de estoque");
-        notify();
+        toast.warn("Quantidade solicitada fora de estoque");
         return;
       }
 
       if (estoques.amount < amount) {
-        const notify = () => toast.warn("Quantidade solicitada fora de estoque");
-        notify();
+        toast.warn("Quantidade solicitada fora de estoque");
+
         return;
       }
+      //fonte https://cheatcode.co/tutorials/how-to-modify-an-existing-object-in-a-javascript-array
+      const updateCart: Product[] = [...cart];
 
-      const produto = cart.find(produto => produto.id === productId);
+      const produto = updateCart.find(produto => produto.id === productId);
+      //Verifica se existe um produto com o id no cart
       if (produto) {
-        Object.assign(produto, { amount: amount });   
-        const updateCart: Product[] = cart;
-        Object.assign(updateCart, { produto });
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updateCart));
+        produto.amount = amount;
         setCart(updateCart);
+        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updateCart));
+
       }
     } catch {
-      // TODO
+      toast.error("Erro na adição do produto");
     }
   };
-
   return (
     <CartContext.Provider
       value={{ cart, addProduct, removeProduct, updateProductAmount }}
