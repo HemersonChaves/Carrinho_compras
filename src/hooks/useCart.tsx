@@ -33,7 +33,9 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
     return [];
   });
-
+  useEffect(() => {
+    localStorage.setItem('@RocketShoes:cart', JSON.stringify(cart));
+  }, [cart])
   const addProduct = async (productId: number) => {
     try {
       const updateCart: Product[] = [...cart];
@@ -48,9 +50,12 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
           return;
         }
         produto.amount = 1;
+        toast.warn("produto no carinho");
         setCart([...updateCart, produto]);
         localStorage.setItem('@RocketShoes:cart', JSON.stringify(updateCart));
       } else {
+
+        toast.warn("produto ja existe no carinho");
         updateProductAmount({ productId, amount: (produtoExist.amount + 1) });
       }
 
