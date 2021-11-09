@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { api } from '../services/api';
 import { Product, Stock } from '../types';
@@ -34,10 +34,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     return [];
   });
 
-  useEffect(() => {
-    localStorage.setItem('@RocketShoes:cart', JSON.stringify(cart));
-  }, [cart]);
-
   const addProduct = async (productId: number) => {
     try {
       //Atualizar Cart
@@ -51,6 +47,10 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       // define o valor da quantidade 
       const amount = (produtoExisteCart ? produtoExisteCart.amount : 0) + 1;
 
+      if (amount > quantidadeProduto.amount) {
+        toast.error('Quantidade solicitada fora de estoque');
+        return;
+      }
       // verifica se produto exist no carrinho
       if (!produtoExisteCart) {
         const produto = (await api.get(`/products/${productId}`)).data;
@@ -99,7 +99,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         throw Error();
       }
     } catch {
-      toast.error("Erro na adição do produto");
+      toast.error("Erro na remoção do produto");
     }
   };
 
@@ -108,15 +108,16 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     amount,
   }: UpdateProductAmount) => {
     try {
-
+  //verifica se o estoque é menor que zero (1)
       if(amount <= 0){
+        toast.error("Quantidade solicitada fora de estoque");
         return;
       }
 
       const estoques = (await api.get<Stock>(`/stock/${productId}`)).data;
-      //verifica se o estoque é menor que zero (1)
-      if ((estoques.amount ) < amount) {
-        toast.warn("Quantidade solicitada fora de estoque");
+      
+      if (amount > estoques.amount ) {
+        toast.error("Quantidade solicitada fora de estoque");
         return;
       }
       //fonte https://cheatcode.co/tutorials/how-to-modify-an-existing-object-in-a-javascript-array
